@@ -1,1 +1,0 @@
-- Add motor fault detection; see chatgpt chat

@@ -77,8 +77,6 @@ constexpr int side = 1; // 1 = right, -1 = left
 // -------------------- Intake & Outake functions -------------------- //
 volatile bool autoIntakeEnabled = false;
 
-
-
 void intake() {
     FirstCollector.move(-127);
     SecondCollector.move(-127);
@@ -104,23 +102,18 @@ void bottomOuttake() {
     FirstCollector.move(127);
     SecondCollector.move(127);
     ThirdCollector.move(-127);
-    // if (stopper.is_extended()) stopper.retract()
 }
 
 void bottomOuttake2(float spd) {
     FirstCollector.move(127);
     SecondCollector.move(spd);
     ThirdCollector.move(-127);
-    // if (stopper.is_extended()) stopper.retract()
 }
 
 void stopAllCollectors() {
     FirstCollector.move(0);
     SecondCollector.move(0);
     ThirdCollector.move(0);
-    // if (!stopper.is_extended()) {
-    //     stopper.extend();
-    // }
 }
 
 /* blocks=0 --> infinite */
@@ -159,11 +152,10 @@ void intakeTask(void*) {
 
 // -------------------- PROS Callbacks -------------------- //
 /* Init code upon program being run */
-bool logDebug = true;
+bool logDebug = false;
 void initialize() {
     pros::lcd::initialize();
     chassis.calibrate();
-    // optical.disable_gesture();
 
     // IMPORTANT: make tasks static so they don't get destroyed when initialize() returns
     static pros::Task screenTask([] {
@@ -175,18 +167,18 @@ void initialize() {
 
             pros::lcd::print(5, "Auto intake %s", (autoIntakeEnabled ? "enabled" : "disabled"));
 
-            // if (logDebug) {
-            //     std::printf(
-            //         "Chassis:\nX: %f\nY: %f\nTheta: %f\n\nAuto Intake: %s\n\nCollectors:\nFirst: %d\nSecond: %d\nThird: %d\n",
-            //         chass.x,
-            //         chass.y,
-            //         chass.theta,
-            //         (autoIntakeEnabled ? "enabled" : "disabled"),
-            //         FirstCollector.get_faults(),
-            //         SecondCollector.get_faults(),
-            //         ThirdCollector.get_faults()
-            //     );
-            // }
+            if (logDebug) {
+                std::printf(
+                    "Chassis:\nX: %f\nY: %f\nTheta: %f\n\nAuto Intake: %s\n\nCollectors:\nFirst: %d\nSecond: %d\nThird: %d\n",
+                    chass.x,
+                    chass.y,
+                    chass.theta,
+                    (autoIntakeEnabled ? "enabled" : "disabled"),
+                    FirstCollector.get_faults(),
+                    SecondCollector.get_faults(),
+                    ThirdCollector.get_faults()
+                );
+            }
 
             lemlib::telemetrySink()->info("Chassis pose: {}", chass);
 
@@ -208,47 +200,17 @@ void disabled() {
 /* Init code that only runs in competition mode */
 void competition_initialize() {}
 
-ASSET(example_txt);
-
 void auto_tune_pid(lemlib::ControllerSettings movementController, bool linear, int margin, int OSCMargin) {
     logDebug = false;
-    // bool osc = false;
     while (true) {
         std::printf("Testing (%f, %f)\n", angularController.kP, angularController.kD);
         chassis.setPose(0, 0, 0);
-        // osc = false;
         if (linear) {
             chassis.moveToPoint(0, 24, 4999);
-            // while (std::abs(chassis.getPose().y-24) > OSCMargin) {
-            //     pros::delay(20);
-            // }
-            // pros::delay(100);
-            // while (chassis.isInMotion()) {
-            //     if (std::abs(chassis.getPose().y - 24) > OSCMargin) {
-            //         osc = true;
-            //     }
-            //     pros::delay(20);
-            // }
         } else {
             chassis.turnToHeading(180, 4999);
-            // while (std::abs(chassis.getPose().theta-180) > OSCMargin) {
-            //     pros::delay(20);
-            // }
-            // pros::delay(100);
-            // while (chassis.isInMotion()) {
-            //     if (std::abs(chassis.getPose().theta - 180) > OSCMargin) {
-            //         osc = true;
-            //     }
-            //     pros::delay(20);
-            // }
         }
-        // if (osc) {
-        //     std::printf("Oscillation on values (%f, %f)\n", movementController.kP, movementController.kD);
-        //     movementController.kD += 3;
-        // } else {
-        //     std::printf("No oscilation on values (%f, %f)\n", movementController.kP, movementController.kD);
-        //     movementController.kP += 1;
-        // }
+
         chassis.waitUntilDone();
         std::printf("Change kP and kD accordingly. Left up and down for kP, X and B for kD, and A to finish.\nCurrent values: (%f, %f)\n",movementController.kP, movementController.kD);
         while (!controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
@@ -328,84 +290,6 @@ void autonomous() {
     pros::delay(200);
     bottomOuttake();
     chassis.waitUntilDone();
-
-    // chassis.moveToPoint(side*-20, tubeY-7, 1000, {.forwards = false});
-    // chassis.waitUntilDone();
-    // chassis.turnToHeading(90, 1000);
-    // chassis.waitUntilDone();
-    // wing.retract();
-    // chassis.moveToPoint(side*-40, tubeY-7, 1000, {.forwards = false});
-    // chassis.waitUntilDone();
-
-    // *******************
-
-    // chassis.moveToPoint(0, 6.674, 500); // 6.674
-    // chassis.waitUntilDone();
-    // chassis.turnToHeading(side*45, 500); // 90
-    // chassis.waitUntilDone();
-    // chassis.moveToPose(side*8.933, 15.607, side*45, 1000, {.horizontalDrift = 8, .lead = 0});
-    // chassis.waitUntilDone();
-    // chassis.moveToPose(side*17.73, 27.53, side*45, 1000, {.horizontalDrift = 8, .lead = 0, .maxSpeed = 48}); // 29.25, 29.25
-    // chassis.turnToHeading(side*135, 800);
-    // chassis.waitUntilDone();
-
-    // Score the bottom tube of the middle goal
-    // chassis.turnToPoint(side*6, 48.5, 1000)
-    // chassis.moveToPose(side*6, 48.5, side*-45, 1000, {.horizontalDrift = 8, .minSpeed = 127});
-    // pros::delay(500);
-    // autoIntakeEnabled = false;
-    // chassis.waitUntilDone();
-    // if (side) bottomOuttake();
-    // else midOuttake();
-    // pros::delay(1000);
-
-    // // Move to between long goal and dispenser
-    // chassis.moveToPose(side*46.77, -16.5, 180, 800, {.horizontalDrift = 8, .minSpeed = 127}); // REMINDER: if this doesnt work, increase timeout
-    // pros::delay(1000);
-
-    // // Collect balls from dispenser
-    // autoIntakeEnabled = true;
-    // feeder.extend();
-    // chassis.waitUntilDone();
-    // pros::delay(1000);
-    // chassis.moveToPose(side*46.77, 18.73, 180, 1000, {.forwards = false, .horizontalDrift = 8, .lead = 0});
-    // autoIntakeEnabled = false;
-    // chassis.waitUntilDone();
-    // intake();
-    // pros::delay(1000);
-
-    // // 🧐
-    // chassis.moveToPose(side*37, 10, 180, 1000);
-    // wing.extend();
-    // chassis.waitUntilDone();
-    // chassis.moveToPose(side*37, 48.5, 180, 1000, {.forwards = false, .horizontalDrift = 8, .lead = 0, .minSpeed = 127});
-
-    // *** OLD CODE ****************
-
-    // chassis.moveToPoint(0, 6.674, 500); // 6.674
-    // chassis.waitUntilDone();
-    // chassis.turnToHeading(side*45, 500); // 90
-    // chassis.waitUntilDone();
-    // chassis.moveToPose(side*8.933, 15.607, side*45, 1000, {.lead = 0});
-    // chassis.waitUntilDone();
-    // chassis.moveToPose(side*17.73, 27.53, side*45, 2500, {.lead = 0, .maxSpeed = 48}); // 29.25, 29.25
-    // chassis.turnToHeading(side*135, 800);
-    // chassis.waitUntilDone();
-    // chassis.moveToPose(side*46.22, -10, side*180, 3000, {.minSpeed = 127}); // 45.72 -> 46.22
-    
-    // feeder.extend();
-    // chassis.waitUntilDone();
-    // chassis.moveToPose(side*46.77, -16.5, side*180, 800, {.lead = 0, .minSpeed = 127}); // 45.72 -> 45.22 -> 46.22 -> 46.72
-    // chassis.waitUntilDone();
-    // pros::delay(1000);
-    // feeder.retract();
-    // autoIntakeEnabled = false;
-    // chassis.moveToPose(side*46.77, 0, 0, 800, {.forwards=false});
-    // chassis.turnToHeading(0, 800);
-    // chassis.waitUntilDone();
-    // chassis.moveToPose(side*46.77, 18.73, side*13, 1000, {.lead = 0}); // working: 41, 14.73
-    // chassis.waitUntilDone();
-    // topOuttake();
 }
 
 // -------------------- Driver Control -------------------- //
