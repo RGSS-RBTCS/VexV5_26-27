@@ -73,83 +73,6 @@ lemlib::Chassis chassis(drivetrain, linearController, angularController, sensors
 // -------------------- QUICK CONFIGURATION -------------------- //
 constexpr int side = 1; // 1 = right, -1 = left
 
-
-// -------------------- Intake & Outake functions -------------------- //
-volatile bool autoIntakeEnabled = false;
-
-void intake() {
-    FirstCollector.move(-127);
-    SecondCollector.move(-127);
-    if (!stopper.is_extended()) stopper.extend();
-}
-
-void topOuttake() {
-    if (stopper.is_extended()) stopper.retract();
-    FirstCollector.move(-127);
-    SecondCollector.move(-127);
-    ThirdCollector.move(127);
-    
-}
-
-void midOuttake() {
-    stopper.retract();
-    FirstCollector.move(-127);
-    SecondCollector.move(-127);
-    ThirdCollector.move(-127);
-}
-
-void bottomOuttake() {
-    FirstCollector.move(127);
-    SecondCollector.move(127);
-    ThirdCollector.move(-127);
-}
-
-void bottomOuttake2(float spd) {
-    FirstCollector.move(127);
-    SecondCollector.move(spd);
-    ThirdCollector.move(-127);
-}
-
-void stopAllCollectors() {
-    FirstCollector.move(0);
-    SecondCollector.move(0);
-    ThirdCollector.move(0);
-}
-
-/* blocks=0 --> infinite */
-void intakeMultiple(int blocks) {
-
-    int accepted = 0;
-
-    while (blocks == 0 || accepted < blocks) {
-        if (!autoIntakeEnabled) {
-            // hard gate: if disabled, motors must be stopped and we wait here
-            stopAllCollectors();
-            while (!autoIntakeEnabled) {
-                pros::delay(20);
-            }
-        }
-
-        // run intake while enabled
-        intake();
-
-        // wait for a block to show up (or auto to get disabled)
-        while (autoIntakeEnabled /*&& colourDet() == 0*/) pros::delay(20);
-        if (!autoIntakeEnabled) continue;
-
-        // count each block intaked
-        while (autoIntakeEnabled) pros::delay(20);
-        accepted++;
-    }
-
-    stopAllCollectors();
-}
-
-void intakeTask(void*) {
-    intakeMultiple(0);
-}
-
-
 // -------------------- PROS Callbacks -------------------- //
 /* Init code upon program being run */
 bool logDebug = false;
@@ -165,15 +88,12 @@ void initialize() {
             pros::lcd::print(1, "Y: %f", chass.y); 
             pros::lcd::print(2, "Theta: %f", chass.theta); 
 
-            pros::lcd::print(5, "Auto intake %s", (autoIntakeEnabled ? "enabled" : "disabled"));
-
             if (logDebug) {
                 std::printf(
                     "Chassis:\nX: %f\nY: %f\nTheta: %f\n\nAuto Intake: %s\n\nCollectors:\nFirst: %d\nSecond: %d\nThird: %d\n",
                     chass.x,
                     chass.y,
                     chass.theta,
-                    (autoIntakeEnabled ? "enabled" : "disabled"),
                     FirstCollector.get_faults(),
                     SecondCollector.get_faults(),
                     ThirdCollector.get_faults()
@@ -185,16 +105,11 @@ void initialize() {
             pros::delay(50);
         }
     });
-
-    // Initialize asynchronous intake task
-    static pros::Task autoIntakeTask(intakeTask);
 }
 
 /* Match end robot state */
 void disabled() {
-    feeder.retract();
-    wing.retract();
-    wing.set_value(false);
+
 }
 
 /* Init code that only runs in competition mode */
@@ -241,113 +156,20 @@ void auto_tune_pid(lemlib::ControllerSettings movementController, bool linear, i
 }
 
 /* Code that runs during autonomous period */
-int tubeY = 34;
 void autonomous() {
-    autoIntakeEnabled = false;
 
-    // begin
-    chassis.setPose(0, 0, 0);
-    feeder.extend(); // extending is slow, therefore call before moving
-
-    // dispenser
-    chassis.moveToPoint(0, tubeY, 1400);
-    chassis.waitUntilDone();
-    chassis.turnToHeading(side*90, 1000); // turn to tube
-    chassis.waitUntilDone();
-
-    // move into tube and intake
-    chassis.moveToPoint(side*15, tubeY+3, 1500, {.maxSpeed = 80}); // t1000 -> t2500; y+2, -> y+1.5
-    chassis.waitUntil(1);
-    autoIntakeEnabled = true;
-    chassis.waitUntilDone();
-    
-    // back into long goal and outtake
-    chassis.moveToPoint(side*-26, tubeY+3, 1000, {.forwards = false}); // -26 -> -28
-    chassis.waitUntil(5); // new addition as a JIC measure; remove if not working
-    feeder.retract(); // -37 -> -36, 7 -> 6
-    autoIntakeEnabled = false;
-    chassis.waitUntilDone();
-    topOuttake();
-    pros::delay(3000); // 2800
-
-    // back up and turn towards middle goal
-    stopAllCollectors();
-    chassis.moveToPoint(side*-8, tubeY, 1000);
-    chassis.waitUntilDone();
-    chassis.turnToPoint(side*-35, 4, 1000); // side*-26, 14
-    chassis.waitUntilDone();
-    
-    // move to middle goal and outtake
-    chassis.moveToPoint(side*-33.5, 5.5, 3000, {.maxSpeed = 55}); // -33 -> -34 -> 33.5, 6 -> 5 -> 5.5
-    autoIntakeEnabled = true;
-    // ******
-    chassis.waitUntil(15);
-    feeder.extend();
-    chassis.waitUntil(10);
-    feeder.retract();
-    // ******
-    chassis.waitUntilDone();
-    autoIntakeEnabled = false;
-    pros::delay(200);
-    bottomOuttake();
-    chassis.waitUntilDone();
 }
 
 // -------------------- Driver Control -------------------- //
-bool manual = true;
-bool feederExtended = false;
-bool stopperExtended = true;
 bool driveDirection = true; // default direction, brain side
 int modifier = driveDirection ? 1 : -1;
 
 /* Code that runs during driver control; The manual controls for the robot */
 void opcontrol() {
-    autoIntakeEnabled = false;
-
     while (true) {
         int leftY = modifier*controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
         int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
         chassis.arcade(leftY, rightX);
-
-        // toggle manual/auto (debounced)
-        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
-            manual = !manual;
-            autoIntakeEnabled = !manual;
-            if (manual) stopAllCollectors(); // manual takes control immediately
-        }
-
-        // Manual intake and outtake controls
-        if (manual) {
-            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
-                bottomOuttake();
-            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
-                intake();
-            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
-                midOuttake();
-            } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
-                topOuttake();
-            } else {
-                stopAllCollectors();
-            }
-        }
-
-        // Wing control
-        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
-            wing.extend(); 
-        } else {
-            wing.retract();
-        }
-
-        // Feeder control
-        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
-            feederExtended = !feederExtended;
-            if (feederExtended) {
-                feeder.extend();
-            } else {
-                feeder.retract();
-            }
-        }
-
 
         if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)) {
             driveDirection = !driveDirection;
