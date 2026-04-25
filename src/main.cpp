@@ -212,6 +212,7 @@ void auto_tune_pid(lemlib::ControllerSettings movementController, bool linear, i
         }
 
         chassis.waitUntilDone();
+        chassis.cancelAllMotions();
         std::printf("Change kP and kD accordingly. Left up and down for kP, X and B for kD, and A to finish.\nCurrent values: (%f, %f)\n",movementController.kP, movementController.kD);
         while (!controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
             if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)) {
