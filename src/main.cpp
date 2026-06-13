@@ -16,21 +16,17 @@ pros::Controller controller(pros::E_CONTROLLER_MASTER);
 pros::MotorGroup leftMotors({-2, 4, -6}, pros::MotorGearset::blue);
 pros::MotorGroup rightMotors({3, 5, -7}, pros::MotorGearset::blue);
 
-// collectors
-pros::Motor FirstCollector(16, pros::MotorGearset::blue);   // front bottom collector
-pros::Motor SecondCollector(12, pros::MotorGearset::blue);  // back collector
-pros::Motor ThirdCollector(-11, pros::MotorGearset::blue);   // front top collector
+// Cascade Lift
+pros::Motor LiftMotor1(16, pros::MotorGearset::blue);   // front bottom collector
+pros::Motor LiftMotor2(12, pros::MotorGearset::blue);  // back collector
+pros::Motor ClawMotor(-11, pros::MotorGearset::blue);   // front top collector
 
 // sensors
 pros::Imu imu(10);
 
-// pneumatics
-pros::adi::Pneumatics wing('E', false);
-pros::adi::Pneumatics feeder('G', false);
-pros::adi::Pneumatics stopper('H', false);
-
 // drivetrain settings
 lemlib::Drivetrain drivetrain(&leftMotors, &rightMotors, 12.5, lemlib::Omniwheel::NEW_275, 450, 2);
+
 // controllers
 lemlib::ControllerSettings linearController(11, // proportional gain (kP)
                                               0, // integral gain (kI)
@@ -94,9 +90,9 @@ void initialize() {
                     chass.x,
                     chass.y,
                     chass.theta,
-                    FirstCollector.get_faults(),
-                    SecondCollector.get_faults(),
-                    ThirdCollector.get_faults()
+                    LiftMotor1.get_faults(),
+                    LiftMotor2.get_faults(),
+                    ClawMotor.get_faults()
                 );
             }
 
@@ -163,10 +159,12 @@ void autonomous() {
 // -------------------- Driver Control -------------------- //
 bool driveDirection = true; // default direction, brain side
 int modifier = driveDirection ? 1 : -1;
-
+static bool clawActive = false;
+static bool liftActive = false;
 /* Code that runs during driver control; The manual controls for the robot */
 void opcontrol() {
     while (true) {
+
         int leftY = modifier*controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
         int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
         chassis.arcade(leftY, rightX);
@@ -185,6 +183,35 @@ void opcontrol() {
         }
 
         // ************************************************************************
+
+        // Claw system:
+
+        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
+            clawActive = !clawActive;     
+        }
+
+        if (clawActive) {
+            ClawMotor.move_absolute(500,200); // Move absolutely to 500 degrees at 200 RPM max speed
+        } else {
+            ClawMotor.move_absolute(0, 200); // Move absolutely back down to 0 degrees at 200 RPM max speed
+        }
+
+        // Cascade Lift System:
+
+        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
+            liftActive = !liftActive;     
+        }
+
+        if (liftActive) {
+            LiftMotor1.move(127); // Move the first lift motor up at full speed
+            LiftMotor2.move(127); // Move the second lift motor up at full speed
+        } else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)) {
+            LiftMotor1.move(-127); // Move the first lift motor down at full speed
+            LiftMotor2.move(-127); // Move the second lift motor down at full speed
+        } else {
+            LiftMotor1.move(0); // Stop the first lift motor
+            LiftMotor2.move(0); // Stop the second lift motor
+        }
 
         pros::delay(25);
     }
