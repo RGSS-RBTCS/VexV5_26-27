@@ -115,46 +115,6 @@ void disabled() {
 /* Init code that only runs in competition mode */
 void competition_initialize() {}
 
-void auto_tune_pid(lemlib::ControllerSettings movementController, bool linear, int margin, int OSCMargin) {
-    logDebug = false;
-    while (true) {
-        std::printf("Testing (%f, %f)\n", angularController.kP, angularController.kD);
-        chassis.setPose(0, 0, 0);
-        if (linear) {
-            chassis.moveToPoint(0, 24, 4999);
-        } else {
-            chassis.turnToHeading(180, 4999);
-        }
-
-        chassis.waitUntilDone();
-        chassis.cancelAllMotions();
-        std::printf("Change kP and kD accordingly. Left up and down for kP, X and B for kD, and A to finish.\nCurrent values: (%f, %f)\n",movementController.kP, movementController.kD);
-        while (!controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)) {
-                angularController.kP += 1;
-            }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
-                angularController.kP -= 1;
-            }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)) {
-                angularController.kD += 1;
-            }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)) {
-                angularController.kD -= 1;
-            }
-            pros::delay(20);
-        }
-
-        lemlib::Chassis chassis(drivetrain, linearController, angularController, sensors, &throttleCurve, &steerCurve);
-        
-        std::printf("Press A on the controller to continue...\n");
-        while (!controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
-            pros::delay(20);
-        }
-        std::printf("----------------------------------\n");
-    }
-}
-
 /* Code that runs during autonomous period */
 void autonomous() {
 
@@ -175,16 +135,6 @@ void opcontrol() {
             driveDirection = !driveDirection;
             modifier = driveDirection ? 1 : -1;
         }
-
-        // AUTO PID TUNING ********************************************************
-
-        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_X) &&
-            controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)) {
-            logDebug = false;
-            auto_tune_pid(angularController, false, 2, 5);
-        }
-
-        // ************************************************************************
 
         pros::delay(25);
     }
