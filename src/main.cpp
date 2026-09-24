@@ -17,17 +17,17 @@ pros::MotorGroup leftMotors({-2, 4, -6}, pros::MotorGearset::blue);
 pros::MotorGroup rightMotors({3, 5, -7}, pros::MotorGearset::blue);
 
 // collectors
-pros::Motor FirstCollector(16, pros::MotorGearset::blue);   // front bottom collector
-pros::Motor SecondCollector(12, pros::MotorGearset::blue);  // back collector
-pros::Motor ThirdCollector(-11, pros::MotorGearset::blue);   // front top collector
+// pros::Motor FirstCollector(16, pros::MotorGearset::blue);   // front bottom collector
+// pros::Motor SecondCollector(12, pros::MotorGearset::blue);  // back collector
+// pros::Motor ThirdCollector(-11, pros::MotorGearset::blue);   // front top collector
 
 // sensors
 pros::Imu imu(10);
 
 // pneumatics
-pros::adi::Pneumatics wing('E', false);
-pros::adi::Pneumatics feeder('G', false);
-pros::adi::Pneumatics stopper('H', false);
+// pros::adi::Pneumatics wing('E', false);
+// pros::adi::Pneumatics feeder('G', false);
+// pros::adi::Pneumatics stopper('H', false);
 
 // drivetrain settings
 lemlib::Drivetrain drivetrain(&leftMotors, &rightMotors, 12.5, lemlib::Omniwheel::NEW_275, 450, 2);
@@ -90,13 +90,10 @@ void initialize() {
 
             if (logDebug) {
                 std::printf(
-                    "Chassis:\nX: %f\nY: %f\nTheta: %f\n\nAuto Intake: %s\n\nCollectors:\nFirst: %d\nSecond: %d\nThird: %d\n",
+                    "Chassis:\nX: %f\nY: %f\nTheta: %f\n",
                     chass.x,
                     chass.y,
-                    chass.theta,
-                    FirstCollector.get_faults(),
-                    SecondCollector.get_faults(),
-                    ThirdCollector.get_faults()
+                    chass.theta
                 );
             }
 
