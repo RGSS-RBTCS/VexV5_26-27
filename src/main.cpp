@@ -114,7 +114,7 @@ void competition_initialize() {}
 
 /* Code that runs during autonomous period */
 void autonomous() {
-
+    
 }
 
 // -------------------- Driver Control -------------------- //
