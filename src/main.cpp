@@ -112,9 +112,14 @@ void disabled() {
 /* Init code that only runs in competition mode */
 void competition_initialize() {}
 
+/* ASSETS */
+ASSET(drivetrain_showcase_txt);
+
 /* Code that runs during autonomous period */
 void autonomous() {
-    
+    chassis.setPose(0, 0, 0);
+
+    chassis.follow(drivetrain_showcase_txt, 15, 10000);
 }
 
 // -------------------- Driver Control -------------------- //
@@ -132,6 +137,8 @@ void opcontrol() {
             driveDirection = !driveDirection;
             modifier = driveDirection ? 1 : -1;
         }
+
+        
 
         pros::delay(25);
     }
