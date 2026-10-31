@@ -119,7 +119,7 @@ ASSET(drivetrain_showcase_txt);
 void autonomous() {
     chassis.setPose(0, 0, 0);
 
-    chassis.follow(drivetrain_showcase_txt, 15, 10000);
+    chassis.follow(drivetrain_showcase_txt, 15, 20000);
 }
 
 // -------------------- Driver Control -------------------- //
@@ -138,7 +138,14 @@ void opcontrol() {
             modifier = driveDirection ? 1 : -1;
         }
 
-        
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_X) &&
+            controller.get_digital(pros::E_CONTROLLER_DIGITAL_A) &&
+            controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP) &&
+            controller.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT)
+            ) {
+                chassis.moveToPose(0, 0, 0, 5000); // move to initial point
+                chassis.follow(drivetrain_showcase_txt, 15, 20000);
+        }
 
         pros::delay(25);
     }
