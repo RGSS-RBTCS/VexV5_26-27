@@ -32,9 +32,9 @@ pros::Imu imu(3);
 // drivetrain settings
 lemlib::Drivetrain drivetrain(&leftMotors, &rightMotors, 15.25, lemlib::Omniwheel::NEW_275, 450, 2); // TODO: drivetrain RPM
 // controllers
-lemlib::ControllerSettings linearController(11, // proportional gain (kP)
+lemlib::ControllerSettings linearController(10, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              44, // derivative gain (kD)
+                                              3, // derivative gain (kD)
                                               3, // anti windup
                                               1, // small error range, in inches
                                               100, // small error range timeout, in milliseconds
@@ -42,13 +42,13 @@ lemlib::ControllerSettings linearController(11, // proportional gain (kP)
                                               500, // large error range timeout, in milliseconds
                                               20 // maximum acceleration (slew)
 );
-lemlib::ControllerSettings angularController(3, // proportional gain (kP) 3
+lemlib::ControllerSettings angularController(2, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              10, // derivative gain (kD) 10
+                                              10, // derivative gain (kD)
                                               3, // anti windup
-                                              1, // small error range, in degrees
+                                              1, // small error range, in inches
                                               100, // small error range timeout, in milliseconds
-                                              3, // large error range, in degrees
+                                              3, // large error range, in inches
                                               500, // large error range timeout, in milliseconds
                                               0 // maximum acceleration (slew)
 );
