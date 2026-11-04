@@ -13,8 +13,8 @@
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
 
 // motor groups
-pros::MotorGroup leftMotors({-2, 4, -6}, pros::MotorGearset::blue);
-pros::MotorGroup rightMotors({3, 5, -7}, pros::MotorGearset::blue);
+pros::MotorGroup leftMotors({2, 4}, pros::MotorGearset::blue);
+pros::MotorGroup rightMotors({9, 10}, pros::MotorGearset::blue);
 
 // collectors
 // pros::Motor FirstCollector(16, pros::MotorGearset::blue);   // front bottom collector
@@ -22,7 +22,7 @@ pros::MotorGroup rightMotors({3, 5, -7}, pros::MotorGearset::blue);
 // pros::Motor ThirdCollector(-11, pros::MotorGearset::blue);   // front top collector
 
 // sensors
-pros::Imu imu(10);
+pros::Imu imu(3);
 
 // pneumatics
 // pros::adi::Pneumatics wing('E', false);
@@ -30,7 +30,7 @@ pros::Imu imu(10);
 // pros::adi::Pneumatics stopper('H', false);
 
 // drivetrain settings
-lemlib::Drivetrain drivetrain(&leftMotors, &rightMotors, 12.5, lemlib::Omniwheel::NEW_275, 450, 2);
+lemlib::Drivetrain drivetrain(&leftMotors, &rightMotors, 15.25, lemlib::Omniwheel::NEW_275, 450, 2); // TODO: drivetrain RPM
 // controllers
 lemlib::ControllerSettings linearController(11, // proportional gain (kP)
                                               0, // integral gain (kI)
@@ -54,10 +54,10 @@ lemlib::ControllerSettings angularController(3, // proportional gain (kP) 3
 );
 
 // tracking wheels
-pros::Rotation horizontalEnc(20);
-pros::Rotation verticalEnc(-9);
-lemlib::TrackingWheel horizontal(&horizontalEnc, lemlib::Omniwheel::NEW_2, 0.75);
-lemlib::TrackingWheel vertical(&verticalEnc, lemlib::Omniwheel::NEW_2, -2.75);
+pros::Rotation horizontalEnc(6);
+pros::Rotation verticalEnc(20);
+lemlib::TrackingWheel horizontal(&horizontalEnc, 1.875, 12.5-8.75);
+lemlib::TrackingWheel vertical(&verticalEnc, 1.875, (15.75/2)-13);
 
 // odom sensors
 lemlib::OdomSensors sensors(&vertical, nullptr, &horizontal, nullptr, &imu);
