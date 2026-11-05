@@ -13,7 +13,7 @@
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
 
 // motor groups
-pros::MotorGroup leftMotors({2, 4}, pros::MotorGearset::blue);
+pros::MotorGroup leftMotors({-2, -4}, pros::MotorGearset::blue);
 pros::MotorGroup rightMotors({9, 10}, pros::MotorGearset::blue);
 
 // collectors
@@ -54,8 +54,8 @@ lemlib::ControllerSettings angularController(2, // proportional gain (kP)
 );
 
 // tracking wheels
-pros::Rotation horizontalEnc(6);
-pros::Rotation verticalEnc(20);
+pros::Rotation horizontalEnc(17);
+pros::Rotation verticalEnc(6);
 lemlib::TrackingWheel horizontal(&horizontalEnc, 1.875, 12.5-8.75);
 lemlib::TrackingWheel vertical(&verticalEnc, 1.875, (15.75/2)-13);
 
@@ -131,7 +131,7 @@ void opcontrol() {
     while (true) {
         int leftY = modifier*controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
         int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
-        chassis.arcade(leftY, rightX);
+        chassis.arcade(leftY/2, rightX/2);
 
         if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)) {
             driveDirection = !driveDirection;
@@ -142,6 +142,15 @@ void opcontrol() {
             controller.get_digital(pros::E_CONTROLLER_DIGITAL_A) &&
             controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP) &&
             controller.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT)
+            ) {
+                chassis.moveToPose(0, 0, 0, 5000); // move to initial point
+                chassis.follow(drivetrain_showcase_txt, 15, 20000);
+        }
+
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1) &&
+            controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2) &&
+            controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1) &&
+            controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)
             ) {
                 chassis.moveToPose(0, 0, 0, 5000); // move to initial point
                 chassis.follow(drivetrain_showcase_txt, 15, 20000);
