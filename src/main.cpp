@@ -17,17 +17,16 @@ pros::MotorGroup leftMotors({-2, 4, -6}, pros::MotorGearset::blue);
 pros::MotorGroup rightMotors({3, 5, -7}, pros::MotorGearset::blue);
 
 // collectors
-// pros::Motor FirstCollector(16, pros::MotorGearset::blue);   // front bottom collector
-// pros::Motor SecondCollector(12, pros::MotorGearset::blue);  // back collector
-// pros::Motor ThirdCollector(-11, pros::MotorGearset::blue);   // front top collector
-
+pros::Motor FirstCollector(16, pros::MotorGearset::blue); // front bottom collector
+pros::Motor SecondCollector(12, pros::MotorGearset::blue);  // back collector
+pros::Motor ThirdCollector(-11, pros::MotorGearset::blue);  // front top collector
 // sensors
 pros::Imu imu(10);
 
 // pneumatics
-// pros::adi::Pneumatics wing('E', false);
-// pros::adi::Pneumatics feeder('G', false);
-// pros::adi::Pneumatics stopper('H', false);
+//pros::adi::Pneumatics wing('E', false);
+//pros::adi::Pneumatics feeder('G', false);
+//pros::adi::Pneumatics stopper('H', false);
 
 // drivetrain settings
 lemlib::Drivetrain drivetrain(&leftMotors, &rightMotors, 12.5, lemlib::Omniwheel::NEW_275, 450, 2);
@@ -132,7 +131,21 @@ void opcontrol() {
             driveDirection = !driveDirection;
             modifier = driveDirection ? 1 : -1;
         }
+    // collector controls
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
+            FirstCollector.move(127);
+            SecondCollector.move(127);
+            ThirdCollector.move(127);
+        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
+            FirstCollector.move(-127);
+            SecondCollector.move(-127);
+            ThirdCollector.move(-127);
+        } else {
+            FirstCollector.move(0);
+            SecondCollector.move(0);
+            ThirdCollector.move(0);
 
+        }
         pros::delay(25);
     }
 }
