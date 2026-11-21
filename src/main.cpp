@@ -114,7 +114,20 @@ void competition_initialize() {}
 
 /* Code that runs during autonomous period */
 void autonomous() {
+    //----------Variable Declarations----------//
+    double velocity = 100; //Set the velocity of the motors to 100
+    double motorFullPower = 127;
+    int delayTime = 1000; //Set the delay time to 1 second
+    //-----------------------------------------//
+    
+    //Rotate the robot 180 degrees to the right
+    leftMotors.move(motorFullPower); // left motors forward
+    rightMotors.move(-motorFullPower); // Right motors backward (For Faster bot rotation)
+    pros::delay(delayTime); //Delay for 1 second to allow the robot to rotate
 
+    //Move the robot forward for 1 turn of the wheels at 100 velocity
+    leftMotors.move_absolute(360, velocity); // left motors forward
+    rightMotors.move_absolute(360, velocity); // Right motors forward
 }
 
 // -------------------- Driver Control -------------------- //
