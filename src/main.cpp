@@ -6,6 +6,7 @@
 #include "pros/rtos.hpp"
 #include <cmath>
 
+
 // ----------- INIT PORTS FOR ROBOT MODULES ----------- //
 // controller
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
@@ -14,6 +15,8 @@ pros::Controller controller(pros::E_CONTROLLER_MASTER);
 pros::MotorGroup leftMotors({-2, 4, -6}, pros::MotorGearset::blue);
 pros::MotorGroup rightMotors({3, 5, -7}, pros::MotorGearset::blue);
 pros::MotorGroup cascadeLiftMotors({-8, 9}, pros::MotorGearset::green);
+pros::Motor claw(15, pros::MotorGearset::blue); // Assuming port 15 for the claw motor
+pros::Motor clawOrientationMotor(14, pros::MotorGearset::blue); // Assuming port 14 for the claw orientation motor
 
 // collectors
 // pros::Motor FirstCollector(16, pros::MotorGearset::blue);   // front bottom collector
@@ -74,11 +77,21 @@ constexpr int side = 1; // 1 = right, -1 = left
 
 //-------------------- ROBOT FUNCTION CREATION --------------------//
 
-void cascadeLift() {
-    // code for cascade lift
+void cascadeLift(double targetInches, int velocityRPM = 200) {
+    constexpr double LIFT_DEG_PER_INCH = 45.0; // distance scale factor: motor degrees per 1 inch of lift travel
+    double targetDegrees = targetInches * LIFT_DEG_PER_INCH;
+    cascadeLiftMotors.move_absolute(targetDegrees, velocityRPM);
 }
 
-
+void clawMovement(bool open){
+    const int CLAW_OPEN_POSITION = 100; // Adjust this value based on your claw's open position
+    const int CLAW_CLOSED_POSITION = 70; // Adjust this value based on your claw's closed position
+    if (open) {
+        claw.move_absolute(CLAW_OPEN_POSITION, 100); // Move to open position at 100 RPM
+    } else {
+        claw.move_absolute(CLAW_CLOSED_POSITION, 100); // Move to closed position at 100 RPM
+    }
+}
 
 // -------------------- PROS Callbacks -------------------- //
 /* Init code upon program being run */
@@ -121,11 +134,23 @@ void competition_initialize() {}
 
 /* Code that runs during autonomous period */
 void autonomous() {
+    chassis.setPose(0, 0, 0); // reset the robot's position to (0, 0) with a heading of 0 degrees
     //----------Variable Declarations----------//
-    double velocity = 100; //Set the velocity of the motors to 100
-    double motorFullPower = 127;
+    const int halfRotationTime = 500; //Time for half a rotation of the motor in milliseconds
+    const int movementTime = 1500;
+    const int targetinches = 13; //Target height for the cascade lift in inches
     //-----------------------------------------//
-    
+    //----------------Autonomous Stage 1-----------------//
+    chassis.turnToHeading(180, halfRotationTime); //Turn to 180 degrees right
+    chassis.waitUntilDone(); //Wait until the robot has finished turning
+    clawMovement(true); //Open the claw
+    chassis.waitUntilDone(); //Wait until the claw has finished opening
+    clawMovement(false); //Close the claw
+    chassis.waitUntilDone(); //Wait until the claw has finished closing
+    cascadeLift(targetinches, 200); //Lift the cascade lift to the target height at 200 RPM
+    chassis.moveToPose(97, 29, 15, halfRotationTime + movementTime, {.maxSpeed = 80}, true); //Turn and move to point (97, 29) within halfRotationTime ms
+    chassis.waitUntilDone(); //Wait until the robot has finished turning and moving lift
+
 }
 
 // -------------------- Driver Control -------------------- //
