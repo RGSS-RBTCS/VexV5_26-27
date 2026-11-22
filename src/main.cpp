@@ -74,7 +74,7 @@ constexpr int side = 1; // 1 = right, -1 = left
 
 //-------------------- ROBOT FUNCTION CREATION --------------------//
 
-void cascadeLift(int status) {
+void cascadeLift() {
     // code for cascade lift
 }
 
