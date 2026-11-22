@@ -1,10 +1,8 @@
 #include "main.h" // IWYU pragma: keep
 #include "lemlib/chassis/chassis.hpp"
 #include "pros/abstract_motor.hpp"
-#include "pros/adi.hpp"
 #include "lemlib/api.hpp" // IWYU pragma: keep
 #include "pros/misc.h"
-#include "pros/motors.hpp"
 #include "pros/rtos.hpp"
 #include <cmath>
 
@@ -15,14 +13,12 @@ pros::Controller controller(pros::E_CONTROLLER_MASTER);
 // motor groups
 pros::MotorGroup leftMotors({-2, 4, -6}, pros::MotorGearset::blue);
 pros::MotorGroup rightMotors({3, 5, -7}, pros::MotorGearset::blue);
+pros::MotorGroup cascadeLiftMotors({-8, 9}, pros::MotorGearset::green);
 
 // collectors
 // pros::Motor FirstCollector(16, pros::MotorGearset::blue);   // front bottom collector
 // pros::Motor SecondCollector(12, pros::MotorGearset::blue);  // back collector
 // pros::Motor ThirdCollector(-11, pros::MotorGearset::blue);   // front top collector
-
-// sensors
-pros::Imu imu(10);
 
 // pneumatics
 // pros::adi::Pneumatics wing('E', false);
@@ -53,6 +49,9 @@ lemlib::ControllerSettings angularController(3, // proportional gain (kP) 3
                                               0 // maximum acceleration (slew)
 );
 
+// sensors
+pros::Imu imu(10); // IMU sensor on port 10
+
 // tracking wheels
 pros::Rotation horizontalEnc(20);
 pros::Rotation verticalEnc(-9);
@@ -72,6 +71,14 @@ lemlib::Chassis chassis(drivetrain, linearController, angularController, sensors
 
 // -------------------- QUICK CONFIGURATION -------------------- //
 constexpr int side = 1; // 1 = right, -1 = left
+
+//-------------------- ROBOT FUNCTION CREATION --------------------//
+
+void cascadeLift(int status) {
+    // code for cascade lift
+}
+
+
 
 // -------------------- PROS Callbacks -------------------- //
 /* Init code upon program being run */
@@ -117,17 +124,8 @@ void autonomous() {
     //----------Variable Declarations----------//
     double velocity = 100; //Set the velocity of the motors to 100
     double motorFullPower = 127;
-    int delayTime = 1000; //Set the delay time to 1 second
     //-----------------------------------------//
     
-    //Rotate the robot 180 degrees to the right
-    leftMotors.move(motorFullPower); // left motors forward
-    rightMotors.move(-motorFullPower); // Right motors backward (For Faster bot rotation)
-    pros::delay(delayTime); //Delay for 1 second to allow the robot to rotate
-
-    //Move the robot forward for 1 turn of the wheels at 100 velocity
-    leftMotors.move_absolute(360, velocity); // left motors forward
-    rightMotors.move_absolute(360, velocity); // Right motors forward
 }
 
 // -------------------- Driver Control -------------------- //
