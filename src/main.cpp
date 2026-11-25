@@ -1,13 +1,12 @@
-#include "main.h" // IWYU pragma: keep
+#include "main.h" 
 #include "lemlib/chassis/chassis.hpp"
 #include "pros/abstract_motor.hpp"
 #include "pros/adi.hpp"
-#include "lemlib/api.hpp" // IWYU pragma: keep
+#include "lemlib/api.hpp" 
 #include "pros/misc.h"
 #include "pros/motors.hpp"
 #include "pros/rtos.hpp"
 #include <cmath>
-#include <new>
 
 // ----------- INIT PORTS FOR ROBOT MODULES ----------- //
 // drivetrain port constants (negative = reversed)
@@ -25,10 +24,10 @@ constexpr int THIRD_COLLECTOR_PORT = -11; // front top collector (reversed)
 
 // CASCADE LIFT MOTORS CHECK LIFT PORTS, MOTOR COLOR, AND IF THEY ARE REVERSED OR NOT. (CHECK)
 constexpr int LIFT_MOTOR_L_PORT = -8;     // left cascade lift motor (reversed)
-constexpr int LIFT_MOTOR_R_PORT = 9;      // right cascade lift motor
+constexpr int LIFT_MOTOR_R_PORT = 17;      // right cascade lift motor
 
 // sensor port constants
-constexpr int IMU_PORT = 10;           // inertial sensor
+constexpr int IMU_PORT = 10;            // inertial sensor
 constexpr int HORIZONTAL_ENC_PORT = 20; // horizontal tracking wheel
 constexpr int VERTICAL_ENC_PORT = -9;   // vertical tracking wheel (reversed)
 
@@ -38,7 +37,6 @@ pros::Controller controller(pros::E_CONTROLLER_MASTER);
 // motor groups
 pros::MotorGroup leftMotors({LDT_MOTOR_F, LDT_MOTOR_B, LDT_MOTOR_U}, pros::MotorGearset::blue);
 pros::MotorGroup rightMotors({RDT_MOTOR_F, RDT_MOTOR_B, RDT_MOTOR_U}, pros::MotorGearset::blue);
-
 // collectors
 pros::Motor FirstCollector(FIRST_COLLECTOR_PORT, pros::MotorGearset::blue); // front bottom collector
 pros::Motor SecondCollector(SECOND_COLLECTOR_PORT, pros::MotorGearset::blue);  // back collector
@@ -106,65 +104,13 @@ lemlib::Chassis chassis(drivetrain, linearController, angularController, sensors
 constexpr int side = 1; // 1 = right, -1 = left
 //CHECK LIFT DEGREES PER INCH VALUE FOR YOUR ROBOT. THIS IS THE NUMBER OF MOTOR DEGREES PER 1 INCH OF LIFT TRAVEL. IT IS USED TO CONVERT INCHES TO MOTOR DEGREES FOR THE CASCADE LIFT. (CHECK)
 constexpr double LIFT_DEG_PER_INCH = 45.0; // distance scale factor: motor degrees per 1 inch of lift travel
-constexpr int TUNING_MODE = 2; // 0 = normal auton, 1 = 90-deg angular PID test, 2 = 1-mat (24 in) linear PID tape test
+constexpr int TUNING_MODE = 1; // 0 = normal auton, 1 = 90-deg angular PID test, 2 = 1-mat (24 in) linear PID tape test
 
 // -------------------- HELPER FUNCTIONS -------------------- //
 /* Moves the cascade lift to a target height in inches during autonomous */
 void cascadeLift(double targetInches, int velocityRPM = 200) {
     double targetDegrees = targetInches * LIFT_DEG_PER_INCH;
     cascadeLiftMotors.move_absolute(targetDegrees, velocityRPM);
-}
-
-/* Interactive controller PID tuner (fixed for LemLib 0.5.6: updates global chassis PID in-place) */
-void auto_tune_pid(bool tuneLinear) {
-    lemlib::ControllerSettings& activeSettings = tuneLinear ? linearController : angularController;
-    while (true) {
-        // rebuild the active PID inside the global chassis with updated kP and kD
-        if (tuneLinear) {
-            new (&chassis.lateralPID) lemlib::PID(
-                linearController.kP, linearController.kI, linearController.kD, linearController.windupRange, false
-            );
-        } else {
-            new (&chassis.angularPID) lemlib::PID(
-                angularController.kP, angularController.kI, angularController.kD, angularController.windupRange, true
-            );
-        }
-        std::printf("Testing %s PID (kP: %.2f, kD: %.2f)\n", tuneLinear ? "LINEAR" : "ANGULAR", activeSettings.kP, activeSettings.kD);
-        chassis.setPose(0, 0, 0);
-        if (tuneLinear) {
-            chassis.moveToPoint(0, 24, 4000); // 1 VEX mat = 24 inches
-        } else {
-            chassis.turnToHeading(90, 4000);  // 90 degree turn test
-        }
-        chassis.waitUntilDone();
-        chassis.cancelAllMotions();
-        lemlib::Pose endPose = chassis.getPose();
-        std::printf("Done! Final Pose -> X: %.2f, Y: %.2f, Theta: %.2f\n", endPose.x, endPose.y, endPose.theta);
-        std::printf("D-Pad UP/DOWN: kP +/- 0.5 | X/B: kD +/- 1.0 | A: re-test | Y: exit tuner\n");
-        // adjust kP and kD live from the controller
-        while (true) {
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)) {
-                activeSettings.kP += 0.5f;
-            }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
-                activeSettings.kP -= 0.5f;
-            }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)) {
-                activeSettings.kD += 1.0f;
-            }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)) {
-                activeSettings.kD -= 1.0f;
-            }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
-                break; // run next test with new gains
-            }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y)) {
-                return; // exit back to driver control
-            }
-            pros::lcd::print(5, "%s kP:%.1f kD:%.1f", tuneLinear ? "LIN" : "ANG", activeSettings.kP, activeSettings.kD);
-            pros::delay(20);
-        }
-    }
 }
 
 // -------------------- PROS Callbacks -------------------- //
@@ -262,15 +208,16 @@ void opcontrol() {
         } else {
             cascadeLiftMotors.brake();
         }
-        // auto pid tuner triggers (hold X + A for angular tuner, or Y + A for 1-mat linear tuner)
-        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_X) &&
-            controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)) {
-            logDebug = false;
-            auto_tune_pid(false);
-        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y) &&
-                   controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)) {
-            logDebug = false;
-            auto_tune_pid(true);
+// manual PID test triggers (press B for 90-deg turn test, press A for 1-mat 24" straight test)              
+if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)) {
+            chassis.setPose(0, 0, 0);
+            chassis.turnToHeading(90, 4000);
+            chassis.waitUntilDone();
+        }
+        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
+            chassis.setPose(0, 0, 0);
+            chassis.moveToPoint(0, 24, 4000);
+            chassis.waitUntilDone();
         }
         pros::delay(25);
     }
