@@ -6,6 +6,12 @@
 #include "pros/rtos.hpp"
 #include <cmath>
 
+//----------Variable Declarations----------//
+    const int movementTime = 1500;
+    const int targetinches = 14; //Target height for the cascade lift in inches
+    const int firstPinHeight = 10;
+//-----------------------------------------//
+
 
 // ----------- INIT PORTS FOR ROBOT MODULES ----------- //
 // controller
@@ -135,11 +141,6 @@ void competition_initialize() {}
 /* Code that runs during autonomous period */
 void autonomous() {
     chassis.setPose(0, 0, 0); // reset the robot's position to (0, 0) with a heading of 0 degrees
-    //----------Variable Declarations----------//
-    const int movementTime = 1500;
-    const int targetinches = 14; //Target height for the cascade lift in inches
-    const int firstPinHeight = 10;
-    //-----------------------------------------//
 
     //----------------Autonomous Stage 1-----------------//
     chassis.moveToPose(9, 5.7, -90, movementTime, {.maxSpeed = 127}, true); //Turn and move to point (9, 5.7) within halfRotationTime ms
