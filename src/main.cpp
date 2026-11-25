@@ -136,20 +136,36 @@ void competition_initialize() {}
 void autonomous() {
     chassis.setPose(0, 0, 0); // reset the robot's position to (0, 0) with a heading of 0 degrees
     //----------Variable Declarations----------//
-    const int halfRotationTime = 500; //Time for half a rotation of the motor in milliseconds
     const int movementTime = 1500;
-    const int targetinches = 13; //Target height for the cascade lift in inches
+    const int targetinches = 14; //Target height for the cascade lift in inches
+    const int firstPinHeight = 10;
     //-----------------------------------------//
+
     //----------------Autonomous Stage 1-----------------//
-    chassis.turnToHeading(180, halfRotationTime); //Turn to 180 degrees right
+    chassis.moveToPose(9, 5.7, -90, movementTime, {.maxSpeed = 127}, true); //Turn and move to point (9, 5.7) within halfRotationTime ms
     chassis.waitUntilDone(); //Wait until the robot has finished turning
     clawMovement(true); //Open the claw
     chassis.waitUntilDone(); //Wait until the claw has finished opening
     clawMovement(false); //Close the claw
     chassis.waitUntilDone(); //Wait until the claw has finished closing
     cascadeLift(targetinches, 200); //Lift the cascade lift to the target height at 200 RPM
-    chassis.moveToPose(97, 29, 15, halfRotationTime + movementTime, {.maxSpeed = 80}, true); //Turn and move to point (97, 29) within halfRotationTime ms
+    chassis.moveToPose(97, 29, -90, movementTime, {.maxSpeed = 127}, true); //Turn and move to point (97, 29) within halfRotationTime ms
     chassis.waitUntilDone(); //Wait until the robot has finished turning and moving lift
+    cascadeLift(firstPinHeight, 200); //Lower the cascade lift back to the first pin height at 200 RPM
+    clawMovement(true); //Open the claw to release the object
+    chassis.waitUntilDone(); //Wait until the claw has finished opening
+    cascadeLift(0, 200); //Lower the cascade lift back to the starting position at 200 RPM
+
+    //----------------Autonomous Stage 2-----------------//
+    chassis.moveToPose(-12, 0.75, 90, movementTime, {.maxSpeed = 127}, true); //Turn and move to point (-12, 0.75) within movementTime ms
+    chassis.waitUntilDone(); //Wait until the robot has finished turning
+    clawMovement(false); //Close the claw to prepare for picking up another object
+    chassis.waitUntilDone(); //Wait until the claw has finished closing
+    cascadeLift(targetinches + 3.3, 200); //Lift the cascade lift to the target height at 200 RPM
+    chassis.moveToPose(-12, 11.7, 180, movementTime, {.maxSpeed = 127}, true); //Turn and move to point (-12, 11.7) within movementTime ms
+    chassis.waitUntilDone(); //Wait until the robot has finished lifting and moving
+    clawMovement(true); //Open the claw to release the object
+    chassis.waitUntilDone(); //Wait until the claw has finished opening
 
 }
 
