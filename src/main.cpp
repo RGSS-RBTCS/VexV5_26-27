@@ -6,11 +6,11 @@
 #include "pros/rtos.hpp"
 #include <cmath>
 
-//----------Variable Declarations----------//
-    const int movementTime = 1500;
-    const int targetinches = 14; //Target height for the cascade lift in inches
-    const int firstPinHeight = 10;
-//-----------------------------------------//
+//----------Permanent Variable Declarations----------//
+const int movementTime = 1500;
+const int targetinches = 14; //Target height for the cascade lift in inches
+const int firstPinHeight = 10;
+//--------------------------------------------------//
 
 
 // ----------- INIT PORTS FOR ROBOT MODULES ----------- //
